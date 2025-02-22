@@ -16,17 +16,63 @@ var fields = [16]string{
 }
 
 func decode(bytes *[]byte) (instruction string, consumed int) {
-	var builder strings.Builder
-
 	switch {
 
 	case (*bytes)[0]>>2 == mov_inst:
-		consumed = decodeMov(&builder, bytes, reg_mask)
+		instruction, consumed = decodeMov(bytes, reg_mask)
 	case (*bytes)[0]>>4 == immediate_to_reg_mov:
-		consumed = decodeImmediateMov(&builder, bytes, reg_mask)
+		instruction, consumed = decodeImmediateMov(bytes, reg_mask)
 
 	default:
 		panic("Unknown instruction")
+	}
+
+	return
+}
+
+func decodeMov(bytes *[]byte, regMask byte) (instruction string, consumed int) {
+	builder := strings.Builder{}
+	builder.WriteString(mov_mnemonic + " ")
+
+	firstByte := (*bytes)[0]
+	w := firstByte & 1
+	d := (firstByte >> 1) & 1
+	reg := ((*bytes)[1] >> 3) & regMask
+	mod := ((*bytes)[1] >> 6)
+	rm := ((*bytes)[1]) & regMask
+
+	if mod == 0b11 {
+		builder.WriteString(" ")
+		if d == 1 {
+			writeOperands(&builder, reg, rm, w)
+		} else {
+			writeOperands(&builder, rm, reg, w)
+		}
+	}
+
+	return builder.String(), 2
+}
+
+func decodeImmediateMov(bytes *[]byte, regMask byte) (instruction string, consumed int) {
+	builder := strings.Builder{}
+	builder.WriteString(mov_mnemonic + " ")
+
+	firstByte := (*bytes)[0]
+	w := (firstByte >> 3) & 1
+	reg := firstByte & regMask
+	data1 := int((*bytes)[1])
+	consumed = 2
+
+	builder.WriteString(decodeRegister(reg, &w))
+	builder.WriteString(", ")
+
+	if w == 1 {
+		data2 := int((*bytes)[2]) << 8
+		data := data2 | data1
+		consumed++
+		builder.WriteString(fmt.Sprint(data))
+	} else {
+		builder.WriteString(fmt.Sprint(data1))
 	}
 
 	return builder.String(), consumed
@@ -46,50 +92,4 @@ func writeOperands(builder *strings.Builder, dest, src, w byte) {
 	builder.WriteString(decodeRegister(dest, &w))
 	builder.WriteString(", ")
 	builder.WriteString(decodeRegister(src, &w))
-}
-
-func decodeMov(builder *strings.Builder, bytes *[]byte, regMask byte) int {
-	builder.WriteString(mov_mnemonic + " ")
-
-	firstByte := (*bytes)[0]
-	w := firstByte & 1
-	d := (firstByte >> 1) & 1
-	reg := ((*bytes)[1] >> 3) & regMask
-	mod := ((*bytes)[1] >> 6)
-	rm := ((*bytes)[1]) & regMask
-
-	if mod == 0b11 {
-		builder.WriteString(" ")
-		if d == 1 {
-			writeOperands(builder, reg, rm, w)
-		} else {
-			writeOperands(builder, rm, reg, w)
-		}
-	}
-
-	return 2
-}
-
-func decodeImmediateMov(builder *strings.Builder, bytes *[]byte, regMask byte) int {
-	builder.WriteString(mov_mnemonic + " ")
-
-	firstByte := (*bytes)[0]
-	w := (firstByte >> 3) & 1
-	reg := firstByte & regMask
-	data1 := int((*bytes)[1])
-	consumed := 2
-
-	builder.WriteString(decodeRegister(reg, &w))
-	builder.WriteString(", ")
-
-	if w == 1 {
-		data2 := int((*bytes)[2]) << 8
-		data := data2 | data1
-		consumed++
-		builder.WriteString(fmt.Sprint(data))
-	} else {
-		builder.WriteString(fmt.Sprint(data1))
-	}
-
-	return consumed
 }
