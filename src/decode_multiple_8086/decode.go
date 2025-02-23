@@ -15,6 +15,10 @@ var fields = [16]string{
 	"ah", "sp", "ch", "bp", "dh", "si", "bh", "di",
 }
 
+var effective_addresses = [8]string{
+	"bx + si", "bx + di", "bp + si", "bp + di", "si", "di", "bp", "bx",
+}
+
 func decode(bytes *[]byte) (instruction string, consumed int) {
 	switch {
 
@@ -41,38 +45,65 @@ func decodeMov(bytes *[]byte, regMask byte) (instruction string, consumed int) {
 	mod := ((*bytes)[1] >> 6)
 	rm := ((*bytes)[1]) & regMask
 
+	var rm_decoded string
+
+	reg_decoded := decodeRegister(reg, &w)
+	consumed = 2
+
+	// register
 	if mod == 0b11 {
-		builder.WriteString(" ")
-		if d == 1 {
-			writeOperands(&builder, reg, rm, w)
+		rm_decoded = decodeRegister(rm, &w)
+	} else { // memory
+		rm_decoded = decodeEffectiveAddress(rm)
+
+		var offset int
+
+		switch mod {
+		case 1:
+			offset = int((*bytes)[2])
+			consumed = 3
+		case 0b10:
+			offset = (int((*bytes)[3]) << 8) | int((*bytes)[2])
+			consumed = 4
+		}
+
+		if offset == 0 {
+			rm_decoded = fmt.Sprintf("[%s]", rm_decoded)
 		} else {
-			writeOperands(&builder, rm, reg, w)
+			rm_decoded = fmt.Sprintf("[%s + %d]", rm_decoded, offset)
 		}
 	}
 
-	return builder.String(), 2
+	if d == 1 {
+		writeOperands(&builder, reg_decoded, rm_decoded)
+	} else {
+		writeOperands(&builder, rm_decoded, reg_decoded)
+	}
+
+	return builder.String(), consumed
 }
 
 func decodeImmediateMov(bytes *[]byte, regMask byte) (instruction string, consumed int) {
 	builder := strings.Builder{}
-	builder.WriteString(mov_mnemonic + " ")
+	builder.WriteString(fmt.Sprintf("%s ", mov_mnemonic))
 
 	firstByte := (*bytes)[0]
 	w := (firstByte >> 3) & 1
 	reg := firstByte & regMask
-	data1 := int((*bytes)[1])
+
+	builder.WriteString(fmt.Sprintf("%s, ", decodeRegister(reg, &w)))
+
 	consumed = 2
 
-	builder.WriteString(decodeRegister(reg, &w))
-	builder.WriteString(", ")
+	data1 := int((*bytes)[1])
 
-	if w == 1 {
+	if w == 0 {
+		builder.WriteString(fmt.Sprint(data1))
+	} else {
 		data2 := int((*bytes)[2]) << 8
 		data := data2 | data1
 		consumed++
 		builder.WriteString(fmt.Sprint(data))
-	} else {
-		builder.WriteString(fmt.Sprint(data1))
 	}
 
 	return builder.String(), consumed
@@ -88,8 +119,15 @@ func decodeRegister(register byte, w *byte) string {
 	panic("Unknown register")
 }
 
-func writeOperands(builder *strings.Builder, dest, src, w byte) {
-	builder.WriteString(decodeRegister(dest, &w))
-	builder.WriteString(", ")
-	builder.WriteString(decodeRegister(src, &w))
+func decodeEffectiveAddress(rm byte) string {
+	if rm < byte(len(fields)) {
+		return effective_addresses[rm]
+	}
+
+	panic("Unknown register")
+}
+
+func writeOperands(builder *strings.Builder, dest, src string) {
+	builder.WriteString(fmt.Sprintf("%s, ", dest))
+	builder.WriteString(src)
 }
