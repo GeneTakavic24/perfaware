@@ -30,6 +30,6 @@ func main() {
 		slice := bytes[i:end]
 		instr, consumed := decode(&slice)
 		fmt.Println(instr)
-		i += consumed // Move by however many bytes decode used
+		i += int(consumed) // Move by however many bytes decode used
 	}
 }
