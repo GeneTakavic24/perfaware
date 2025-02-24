@@ -10,9 +10,16 @@ const immediate_to_reg_mov = 0b1011
 const immediate_to_reg_mem = 0b1100011
 const memory_to_accumulator = 0b1010000
 const accumulator_to_memory = 0b1010001
+
+const add_instr = 0
+const sub_instr = 0b101
+const cmp_instr = 0b111
+
 const mov_mnemonic = "mov"
 const ax = "ax"
 const reg_mask byte = 0b111
+
+var mnemonics = [4]string{mov_mnemonic, "add", "sub", "cmp"}
 
 var fields = [16]string{
 	"al", "ax", "cl", "cx", "dl", "dx", "bl", "bx",
@@ -27,13 +34,31 @@ func decode(bytes *[]byte) (instruction string, consumed byte) {
 
 	switch {
 	case (*bytes)[0]>>2 == mov_inst:
-		instruction, consumed = decodeMov(bytes)
+		instruction, consumed = decodeMov(bytes, &mnemonics[0])
+	case (*bytes)[0]>>3 == add_instr:
+		instruction, consumed = decodeMov(bytes, &mnemonics[1])
+	case (*bytes)[0]>>3 == sub_instr:
+		instruction, consumed = decodeMov(bytes, &mnemonics[2])
+	case (*bytes)[0]>>3 == cmp_instr:
+		instruction, consumed = decodeMov(bytes, &mnemonics[3])
 	case (*bytes)[0]>>1 == immediate_to_reg_mem:
-		instruction, consumed = decodeImmediateToRegMem(bytes)
+		instruction, consumed = decodeImmediateToRegMem(bytes, &mnemonics[0])
+	case (*bytes)[1]>>3&reg_mask == add_instr:
+		instruction, consumed = decodeImmediateToRegMem(bytes, &mnemonics[1])
+	case (*bytes)[1]>>3&reg_mask == sub_instr:
+		instruction, consumed = decodeImmediateToRegMem(bytes, &mnemonics[2])
+	case (*bytes)[1]>>3&reg_mask == cmp_instr:
+		instruction, consumed = decodeImmediateToRegMem(bytes, &mnemonics[3])
 	case (*bytes)[0]>>4 == immediate_to_reg_mov:
 		instruction, consumed = decodeImmediateMov(bytes)
 	case (*bytes)[0]>>1 == memory_to_accumulator || (*bytes)[0]>>1 == accumulator_to_memory:
-		instruction, consumed = decodeAccumulator(bytes)
+		instruction, consumed = decodeAccumulator(bytes, &mnemonics[0])
+	case (*bytes)[0]>>3&reg_mask == add_instr:
+		instruction, consumed = decodeAccumulator(bytes, &mnemonics[1])
+	case (*bytes)[0]>>3&reg_mask == sub_instr:
+		instruction, consumed = decodeAccumulator(bytes, &mnemonics[2])
+	case (*bytes)[0]>>3&reg_mask == cmp_instr:
+		instruction, consumed = decodeAccumulator(bytes, &mnemonics[3])
 	default:
 		panic("Unknown instruction")
 	}
@@ -41,10 +66,9 @@ func decode(bytes *[]byte) (instruction string, consumed byte) {
 	return
 }
 
-func decodeImmediateToRegMem(bytes *[]byte) (instr string, consumed byte) {
+func decodeImmediateToRegMem(bytes *[]byte, mnemonic *string) (instr string, consumed byte) {
 	builder := strings.Builder{}
-	builder.WriteString(mov_mnemonic + " ")
-
+	builder.WriteString(fmt.Sprintf("%s ", *mnemonic))
 	w := (*bytes)[0] & 1
 	consumed = 2
 
@@ -63,9 +87,9 @@ func decodeImmediateToRegMem(bytes *[]byte) (instr string, consumed byte) {
 	return builder.String(), consumed + rm_consumed + dataConsumed
 }
 
-func decodeMov(bytes *[]byte) (instruction string, consumed byte) {
+func decodeMov(bytes *[]byte, mnemonic *string) (instruction string, consumed byte) {
 	builder := strings.Builder{}
-	builder.WriteString(mov_mnemonic + " ")
+	builder.WriteString(fmt.Sprintf("%s ", *mnemonic))
 	firstByte := (*bytes)[0]
 
 	d := (firstByte >> 1) & 1
@@ -104,7 +128,7 @@ func decodeImmediateMov(bytes *[]byte) (instruction string, consumed byte) {
 	return builder.String(), consumed + dataConsumed
 }
 
-func decodeAccumulator(bytes *[]byte) (instruction string, consumed byte) {
+func decodeAccumulator(bytes *[]byte, mnemonic *string) (instruction string, consumed byte) {
 	builder := strings.Builder{}
 	consumed = 1
 	firstByte := (*bytes)[0]
@@ -113,7 +137,12 @@ func decodeAccumulator(bytes *[]byte) (instruction string, consumed byte) {
 
 	dataBytes := (*bytes)[consumed:]
 	data, dataConsumed := decodeData(&dataBytes, &w)
-	dataStr := fmt.Sprintf("[%d]", data)
+
+	dataStr := fmt.Sprint(data)
+
+	if *mnemonic == mov_mnemonic {
+		dataStr = fmt.Sprintf("[%s]", dataStr)
+	}
 
 	if (firstByte>>1)&1 == 0 {
 		writeOperands(&builder, ax, dataStr)
