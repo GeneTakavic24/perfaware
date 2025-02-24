@@ -47,12 +47,18 @@ func decodeImmediateToRegMem(bytes *[]byte) (instr string, consumed byte) {
 
 	w := (*bytes)[0] & 1
 	consumed = 2
-	dataBytes := (*bytes)[4:]
 
 	rm_decoded, rm_consumed := decode_mov_rm(bytes, &w)
-	data, dataConsumed := decodeData(&dataBytes, &w)
 
-	writeOperands(&builder, rm_decoded, fmt.Sprint(data))
+	dataBytes := (*bytes)[consumed+rm_consumed:]
+	data, dataConsumed := decodeData(&dataBytes, &w)
+	size := "byte"
+
+	if dataConsumed == 2 {
+		size = "word"
+	}
+
+	writeOperands(&builder, rm_decoded, fmt.Sprintf("%s %d", size, data))
 
 	return builder.String(), consumed + rm_consumed + dataConsumed
 }
@@ -89,9 +95,9 @@ func decodeImmediateMov(bytes *[]byte) (instruction string, consumed byte) {
 
 	builder.WriteString(fmt.Sprintf("%s, ", decodeRegister(reg, &w)))
 
-	consumed = 2
+	consumed = 1
 
-	dataBytes := (*bytes)[1:]
+	dataBytes := (*bytes)[consumed:]
 	data, dataConsumed := decodeData(&dataBytes, &w)
 	builder.WriteString(fmt.Sprint(data))
 
@@ -105,7 +111,7 @@ func decodeAccumulator(bytes *[]byte) (instruction string, consumed byte) {
 
 	w := firstByte & 1
 
-	dataBytes := (*bytes)[1:]
+	dataBytes := (*bytes)[consumed:]
 	data, dataConsumed := decodeData(&dataBytes, &w)
 	dataStr := fmt.Sprintf("[%d]", data)
 
@@ -120,10 +126,11 @@ func decodeAccumulator(bytes *[]byte) (instruction string, consumed byte) {
 
 func decodeData(bytes *[]byte, w *byte) (data int, consumed byte) {
 	data = int((*bytes)[0])
+
 	consumed = 1
 
 	if *w == 1 {
-		data2 := int((*bytes)[2]) << 8
+		data2 := int((*bytes)[1]) << 8
 		data = data2 | data
 		consumed++
 	}

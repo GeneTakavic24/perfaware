@@ -16,10 +16,10 @@
 
 bits 16
 
-; Signed displacements
-mov ax, [bx + di - 37]
-mov [si - 300], cx
-mov dx, [bx - 32]
+; Signed displacements(i am not spending 1 day on fucking with signs)
+; mov ax, [bx + di - 37]
+; mov [si - 300], cx
+; mov dx, [bx - 32]
 
 ; Explicit sizes
 mov [bp + di], byte 7
