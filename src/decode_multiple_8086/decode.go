@@ -28,10 +28,10 @@ func decode(bytes *[]byte) (instruction string, consumed byte) {
 	switch {
 	case (*bytes)[0]>>2 == mov_inst:
 		instruction, consumed = decodeMov(bytes)
-	case (*bytes)[0]>>4 == immediate_to_reg_mov:
-		instruction, consumed = decodeImmediateMov(bytes)
 	case (*bytes)[0]>>1 == immediate_to_reg_mem:
 		instruction, consumed = decodeImmediateToRegMem(bytes)
+	case (*bytes)[0]>>4 == immediate_to_reg_mov:
+		instruction, consumed = decodeImmediateMov(bytes)
 	case (*bytes)[0]>>1 == memory_to_accumulator || (*bytes)[0]>>1 == accumulator_to_memory:
 		instruction, consumed = decodeAccumulator(bytes)
 	default:
