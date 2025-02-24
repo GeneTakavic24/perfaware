@@ -41,19 +41,20 @@ func decode(bytes *[]byte) (instruction string, consumed byte) {
 	return
 }
 
-func decodeImmediateToRegMem(bytes *[]byte) (string, byte) {
+func decodeImmediateToRegMem(bytes *[]byte) (instr string, consumed byte) {
 	builder := strings.Builder{}
 	builder.WriteString(mov_mnemonic + " ")
-	firstByte := (*bytes)[0]
 
-	w := firstByte & 1
+	w := (*bytes)[0] & 1
+	consumed = 2
+	dataBytes := (*bytes)[4:]
 
 	rm_decoded, rm_consumed := decode_mov_rm(bytes, &w)
-	data, dataConsumed := decodeData(bytes, &w)
+	data, dataConsumed := decodeData(&dataBytes, &w)
 
 	writeOperands(&builder, rm_decoded, fmt.Sprint(data))
 
-	return builder.String(), rm_consumed + dataConsumed
+	return builder.String(), consumed + rm_consumed + dataConsumed
 }
 
 func decodeMov(bytes *[]byte) (instruction string, consumed byte) {
