@@ -98,8 +98,7 @@ func getMnemonic(mnemonic *byte) string {
 
 func decode(bytes *[]byte) (instruction string, consumed byte) {
 
-	switch (*bytes)[0] {
-	case JNZ:
+	if _, ok := opcodeNames[Opcode((*bytes)[0])]; ok {
 		return decodeJmp(bytes)
 	}
 
