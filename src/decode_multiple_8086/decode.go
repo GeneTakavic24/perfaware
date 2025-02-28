@@ -26,6 +26,54 @@ var mov_mnemonic = "mov"
 const ax = "ax"
 const reg_mask byte = 0b111
 
+type Opcode byte
+
+const (
+	JNZ    = 0b01110101
+	JE     = 0b01110100
+	JL     = 0b01111100
+	JLE    = 0b01111110
+	JB     = 0b01110010
+	JBE    = 0b01110110
+	JP     = 0b01111010
+	JO     = 0b01110000
+	JS     = 0b01111000
+	JNL    = 0b01111101
+	JG     = 0b01111111
+	JNB    = 0b01110011
+	JA     = 0b01110111
+	JNP    = 0b01111011
+	JNO    = 0b01110001
+	JNS    = 0b01111001
+	LOOP   = 0b11100010
+	LOOPZ  = 0b11100001
+	LOOPNZ = 0b11100000
+	JCXZ   = 0b11100011
+)
+
+var opcodeNames = map[Opcode]string{
+	JNZ:    "jnz",
+	JE:     "je",
+	JL:     "jl",
+	JLE:    "jle",
+	JB:     "jb",
+	JBE:    "jbe",
+	JP:     "jp",
+	JO:     "jo",
+	JS:     "js",
+	JNL:    "jnl",
+	JG:     "jg",
+	JNB:    "jnb",
+	JA:     "ja",
+	JNP:    "jnp",
+	JNO:    "jno",
+	JNS:    "jns",
+	LOOP:   "loop",
+	LOOPZ:  "loopz",
+	LOOPNZ: "loopnz",
+	JCXZ:   "jcxz",
+}
+
 var fields = [16]string{
 	"al", "ax", "cl", "cx", "dl", "dx", "bl", "bx",
 	"ah", "sp", "ch", "bp", "dh", "si", "bh", "di",
@@ -49,6 +97,11 @@ func getMnemonic(mnemonic *byte) string {
 }
 
 func decode(bytes *[]byte) (instruction string, consumed byte) {
+
+	switch (*bytes)[0] {
+	case JNZ:
+		return decodeJmp(bytes)
+	}
 
 	switch {
 	case (*bytes)[0]>>4 == immediate_to_reg_mov:
@@ -74,6 +127,13 @@ func decode(bytes *[]byte) (instruction string, consumed byte) {
 	}
 
 	panic("Unknown instruction")
+}
+
+func decodeJmp(bytes *[]byte) (instr string, consumed byte) {
+	builder := strings.Builder{}
+	mnemonic := opcodeNames[Opcode((*bytes)[0])]
+	builder.WriteString(fmt.Sprintf("%s %d", mnemonic, int8((*bytes)[1])))
+	return builder.String(), 2
 }
 
 func decodeImmediateToRegMemWrapper(bytes *[]byte) (instr string, consumed byte) {
