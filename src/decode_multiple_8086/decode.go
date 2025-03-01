@@ -287,13 +287,13 @@ func decode_mov_rm(bytes *[]byte, w, mod *byte) (rm_decoded string, consumed byt
 
 		directAccess := *mod == 0 && rm_decoded == "bp"
 
-		var offset uint16
+		var offset int16
 
 		if *mod == 1 {
-			offset = uint16((*bytes)[2])
+			offset = int16(int8((*bytes)[2]))
 			consumed = 1
 		} else if *mod == 0b10 || directAccess {
-			offset = (uint16((*bytes)[3]) << 8) | uint16((*bytes)[2])
+			offset = int16((*bytes)[2]) | (int16((*bytes)[3]) << 8)
 			consumed = 2
 		}
 
@@ -303,7 +303,12 @@ func decode_mov_rm(bytes *[]byte, w, mod *byte) (rm_decoded string, consumed byt
 			if directAccess {
 				rm_decoded = fmt.Sprintf("[%d]", offset)
 			} else {
-				rm_decoded = fmt.Sprintf("[%s + %d]", rm_decoded, offset)
+				sign := "+"
+				if offset < 0 {
+					sign = "-"
+					offset = -offset
+				}
+				rm_decoded = fmt.Sprintf("[%s %s %d]", rm_decoded, sign, offset)
 			}
 		}
 	}
