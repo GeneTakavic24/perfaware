@@ -24,8 +24,7 @@ func main() {
 	for i := 0; i < len(bytes); {
 		// Take up to 6 bytes or whatever's left, decode decides how many to eat
 		end := min(i+6, len(bytes))
-		slice := bytes[i:end]
-		instr, consumed := decode(&slice)
+		instr, consumed := decode(bytes[i:end])
 		fmt.Println(instr)
 		i += int(consumed) // Move by however many bytes decode used
 	}
