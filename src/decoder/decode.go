@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -95,7 +96,26 @@ func getMnemonic(mnemonic byte) string {
 	panic("Unknown mnemonic")
 }
 
-func decode(bytes []byte) (instruction string, consumed byte) {
+func decode(filePath string) {
+	bytes, err := os.ReadFile(filePath)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
+
+	fmt.Printf("; %s disassembly:\n", filePath)
+	fmt.Println("bits 16")
+	fmt.Println()
+
+	for i := 0; i < len(bytes); {
+		end := min(i+6, len(bytes))
+		instr, consumed := parseInstruction(bytes[i:end])
+		fmt.Println(instr)
+		i += int(consumed)
+	}
+}
+
+func parseInstruction(bytes []byte) (instruction string, consumed byte) {
 	if _, ok := opcodeNames[Opcode(bytes[0])]; ok {
 		return decodeJmp(bytes)
 	}
