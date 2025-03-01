@@ -152,7 +152,7 @@ func decodeImmediateToRegMem(bytes *[]byte, mnemonic *string) (instr string, con
 	rm_decoded, rm_consumed := decode_mov_rm(bytes, &w, &mod)
 
 	dataBytes := (*bytes)[consumed+rm_consumed:]
-	var data int
+	var data uint16
 	var dataConsumed byte
 
 	if *mnemonic == mov_mnemonic {
@@ -262,13 +262,13 @@ func decodeAccumulator(bytes *[]byte, mnemonic *string) (instruction string, con
 	return builder.String(), consumed + dataConsumed
 }
 
-func decodeData(bytes *[]byte, w *byte) (data int, consumed byte) {
-	data = int((*bytes)[0])
+func decodeData(bytes *[]byte, w *byte) (data uint16, consumed byte) {
+	data = uint16((*bytes)[0])
 
 	consumed = 1
 
 	if *w == 1 {
-		data2 := int((*bytes)[1]) << 8
+		data2 := uint16((*bytes)[1]) << 8
 		data = data2 | data
 		consumed++
 	}
@@ -287,13 +287,13 @@ func decode_mov_rm(bytes *[]byte, w, mod *byte) (rm_decoded string, consumed byt
 
 		directAccess := *mod == 0 && rm_decoded == "bp"
 
-		var offset int
+		var offset uint16
 
 		if *mod == 1 {
-			offset = int((*bytes)[2])
+			offset = uint16((*bytes)[2])
 			consumed = 1
 		} else if *mod == 0b10 || directAccess {
-			offset = (int((*bytes)[3]) << 8) | int((*bytes)[2])
+			offset = (uint16((*bytes)[3]) << 8) | uint16((*bytes)[2])
 			consumed = 2
 		}
 
