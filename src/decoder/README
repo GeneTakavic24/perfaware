@@ -1,0 +1,40 @@
+# 8086 Instruction Decoder
+
+This project is an 8086 instruction decoder designed to disassemble the instructions found in the following file:
+
+[listing_0038_many_register_mov](https://github.com/cmuratori/computer_enhance/blob/main/perfaware/part1/listing_0038_many_register_mov)
+
+## Overview
+
+The 8086 instruction decoder takes binary machine code and translates it into human-readable assembly language instructions. This tool is specifically tailored to handle the instructions present in the files from the Computer Enhance project by Casey Muratori.
+
+## Features
+
+- Decodes 8086 machine code instructions
+- Outputs human-readable assembly language
+- Supports a wide range of 8086 instructions
+
+## Usage
+
+To get started, you need to install NASM, the Netwide Assembler. You can download it from [here](https://www.nasm.us/).
+
+Once NASM is installed, you can assemble your assembly code file to generate the binary machine code. Use the following command:
+
+```sh
+nasm -f bin -o output.bin yourfile.asm
+```
+
+Replace `yourfile.asm` with the name of your assembly code file, and `output.bin` with the desired name for the binary output file.
+
+After generating the binary machine code, you can run the `sim8086` tool to disassemble the binary file and output the corresponding assembly language instructions:
+
+```sh
+sim8086 output.bin
+```
+
+This will produce the disassembled instructions, which you can then analyze or use as needed.
+To use the decoder, simply provide the binary machine code as input, and the decoder will output the corresponding assembly language instructions.
+
+## Acknowledgements
+
+This project is inspired by the Computer Enhance project by Casey Muratori. You can find more information about the project [here](https://github.com/cmuratori/computer_enhance).
