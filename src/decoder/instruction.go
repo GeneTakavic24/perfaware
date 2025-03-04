@@ -1,6 +1,13 @@
 package main
 
-type Operand any
+import (
+	"fmt"
+	"strings"
+)
+
+type Operand interface {
+	String() string
+}
 
 type Instruction struct {
 	Operation Operation
@@ -26,4 +33,21 @@ type Register struct {
 type Immediate struct {
 	Value        int
 	ExplicitSize string
+}
+
+func (r Register) String() string {
+	return r.Name
+}
+
+func (r Immediate) String() string {
+	var b strings.Builder
+
+	if r.ExplicitSize != "" {
+		b.WriteString(r.ExplicitSize)
+		b.WriteRune(' ')
+	}
+
+	b.WriteString(fmt.Sprintf("%d", r.Value))
+
+	return b.String()
 }

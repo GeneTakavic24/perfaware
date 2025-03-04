@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Executor interface {
 	Execute(instr Instruction) error
@@ -35,11 +38,24 @@ func newX86StdoutExecutor(cpu *CPU) *X86StdoutExecutor {
 // 	case JMP:
 // 		return e.executeJMP(instr)
 // 	default:
-// 		return fmt.Errorf("unsupported instruction type: %v", instr.InstrType)
+// 		return 	fmt.Errorf("unsupported instruction type: %v", instr.InstrType)
 // 	}
 // }
 
 func (e *X86StdoutExecutor) Execute(instr Instruction) error {
-	fmt.Println(instr)
+	var b strings.Builder
+
+	b.WriteString(string(instr.Operation))
+	b.WriteRune(' ')
+
+	b.WriteString(instr.Dest.String())
+
+	if instr.Src != nil {
+		b.WriteRune(',')
+		b.WriteRune(' ')
+		b.WriteString(instr.Src.String())
+	}
+
+	fmt.Print(b.String())
 	return nil
 }

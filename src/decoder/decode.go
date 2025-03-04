@@ -3,20 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 )
-
-func getMnemonic(mnemonic byte) string {
-	switch mnemonic {
-	case add_instr:
-		return "add"
-	case sub_instr:
-		return "sub"
-	case cmp_instr:
-		return "cmp"
-	}
-	panic("Unknown mnemonic")
-}
 
 func decode(filePath string) {
 	bytes, err := os.ReadFile(filePath)
@@ -25,13 +12,17 @@ func decode(filePath string) {
 		return
 	}
 
+	executor := newX86StdoutExecutor(NewCPU(10))
+
 	fmt.Printf("; %s disassembly:\n", filePath)
-	fmt.Println("bits 16\n")
+	fmt.Println("bits 16")
+	fmt.Println()
 
 	for i := 0; i < len(bytes); {
 		end := min(i+6, len(bytes))
 		instr := parseInstruction(bytes[i:end])
-		fmt.Println(instr)
+		executor.Execute(instr)
+		fmt.Println()
 		i += int(instr.Consumed)
 	}
 }
@@ -72,7 +63,7 @@ func decodeJmp(bytes []byte) Instruction {
 
 	return Instruction{
 		Operation: Operation(mnemonic),
-		Dest:      Immediate{Value: int(bytes[1])},
+		Dest:      Immediate{Value: int(int8(bytes[1]))},
 		Consumed:  2,
 	}
 }
@@ -131,14 +122,15 @@ func decodeRegMemWrapper(bytes []byte) Instruction {
 }
 
 func decodeRegMem(bytes []byte, mnemonic *string) Instruction {
-	firstByte := bytes[0]
-
-	d := (firstByte >> 1) & 1
+	d := (bytes[0] >> 1) & 1
 	reg := (bytes[1] >> 3) & reg_mask
 	w := bytes[0] & 1
 	mod := bytes[1] >> 6
 
-	instruction := Instruction{Consumed: 2}
+	instruction := Instruction{
+		Operation: Operation(*mnemonic),
+		Consumed:  2,
+	}
 
 	reg_decoded := decodeRegister(reg, &w)
 	rm_decoded, cons := decode_mov_rm(bytes, &w, &mod)
@@ -160,7 +152,10 @@ func decodeImmediateMov(bytes []byte) Instruction {
 	w := (firstByte >> 3) & 1
 	reg := firstByte & reg_mask
 
-	instruction := Instruction{Consumed: 1}
+	instruction := Instruction{
+		Operation: Operation(mov_mnemonic),
+		Consumed:  1,
+	}
 
 	dataBytes := bytes[instruction.Consumed:]
 	data, dataConsumed := decodeData(dataBytes, &w)
@@ -178,10 +173,10 @@ func decodeAccumulatorWrapper(bytes []byte) Instruction {
 }
 
 func decodeAccumulator(bytes []byte, mnemonic *string) Instruction {
-	builder := strings.Builder{}
-	builder.WriteString(fmt.Sprintf("%s ", *mnemonic))
-
-	instruction := Instruction{Consumed: 1}
+	instruction := Instruction{
+		Operation: Operation(*mnemonic),
+		Consumed:  1,
+	}
 	firstByte := bytes[0]
 
 	w := firstByte & 1
@@ -233,7 +228,7 @@ func decode_mov_rm(bytes []byte, w, mod *byte) (operand Operand, consumed byte) 
 	} else { // memory
 		effectiveAddress := decodeEffectiveAddress(rm)
 
-		directAccess := *mod == 0 && effectiveAddress.Base.Name == "bp"
+		directAccess := *mod == 0 && rm == 0b110
 
 		if *mod == 1 {
 			effectiveAddress.Offset = int16(int8(bytes[2]))
@@ -254,6 +249,18 @@ func decode_mov_rm(bytes []byte, w, mod *byte) (operand Operand, consumed byte) 
 	return
 }
 
+func getMnemonic(mnemonic byte) string {
+	switch mnemonic {
+	case add_instr:
+		return "add"
+	case sub_instr:
+		return "sub"
+	case cmp_instr:
+		return "cmp"
+	}
+	panic("Unknown mnemonic")
+}
+
 func decodeRegister(register byte, w *byte) Register {
 	register = register<<1 | *w
 
@@ -270,9 +277,4 @@ func decodeEffectiveAddress(rm byte) EffectiveAddress {
 	}
 
 	panic("Unknown register")
-}
-
-func writeOperands(builder *strings.Builder, dest, src string) {
-	builder.WriteString(fmt.Sprintf("%s, ", dest))
-	builder.WriteString(src)
 }

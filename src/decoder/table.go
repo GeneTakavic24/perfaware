@@ -106,17 +106,15 @@ func (ea EffectiveAddress) String() string {
 		hasReg = true
 	}
 	if ea.Index.Name != "" {
-		if hasReg {
-			b.WriteString(" + ")
-		}
+		b.WriteString(" + ")
 		b.WriteString(ea.Index.Name)
-		hasReg = true
 	}
-	if ea.Offset != 0 || !hasReg {
+	if ea.Offset != 0 {
 		if hasReg && ea.Offset > 0 {
 			b.WriteString(" + ")
-		} else if hasReg {
-			b.WriteString(" ")
+		} else if hasReg && ea.Offset < 0 {
+			ea.Offset = -ea.Offset
+			b.WriteString(" - ")
 		}
 		b.WriteString(fmt.Sprint(ea.Offset))
 	}
