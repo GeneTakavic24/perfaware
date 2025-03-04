@@ -5,14 +5,16 @@ import (
 	"os"
 )
 
-func decode(filePath string) {
+func simulate(filePath string) {
 	bytes, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return
 	}
 
-	executor := newX86StdoutExecutor(NewCPU(10))
+	cpu := NewCPU(10)
+
+	executor := newX86Executor(cpu)
 
 	fmt.Printf("; %s disassembly:\n", filePath)
 	fmt.Println("bits 16")
@@ -21,10 +23,13 @@ func decode(filePath string) {
 	for i := 0; i < len(bytes); {
 		end := min(i+6, len(bytes))
 		instr := parseInstruction(bytes[i:end])
+		Stdout(instr)
 		executor.Execute(instr)
 		fmt.Println()
 		i += int(instr.Consumed)
 	}
+
+	cpu.PrintCPU()
 }
 
 func parseInstruction(bytes []byte) Instruction {

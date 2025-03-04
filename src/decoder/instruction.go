@@ -19,11 +19,9 @@ type Instruction struct {
 type Operation string
 
 const (
-	MOV = iota
-	ADD
-	SUB
-	CMP
-	JMP
+	MOV Operation = "mov"
+	ADD Operation = "add"
+	SUB Operation = "sub"
 )
 
 type Register struct {

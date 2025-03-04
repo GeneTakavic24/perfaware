@@ -9,5 +9,5 @@ func main() {
 		return
 	}
 
-	decode(os.Args[1])
+	simulate(os.Args[1])
 }
