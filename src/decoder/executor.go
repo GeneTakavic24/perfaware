@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 type Executor interface {
@@ -10,10 +9,6 @@ type Executor interface {
 }
 
 type X86Executor struct {
-	cpu *CPU
-}
-
-type X86StdoutExecutor struct {
 	cpu *CPU
 }
 
@@ -25,10 +20,6 @@ var ops = map[Operation]func(current, value int) int{
 
 func newX86Executor(cpu *CPU) *X86Executor {
 	return &X86Executor{cpu: cpu}
-}
-
-func newX86StdoutExecutor(cpu *CPU) *X86StdoutExecutor {
-	return &X86StdoutExecutor{cpu: cpu}
 }
 
 func (e *X86Executor) Execute(instr Instruction) error {
@@ -59,22 +50,4 @@ func (e *X86Executor) extractFrom(o Operand) int {
 	}
 
 	panic("Unknown dest")
-}
-
-func Stdout(instr Instruction) error {
-	var b strings.Builder
-
-	b.WriteString(string(instr.Operation))
-	b.WriteRune(' ')
-
-	b.WriteString(instr.Dest.String())
-
-	if instr.Src != nil {
-		b.WriteRune(',')
-		b.WriteRune(' ')
-		b.WriteString(instr.Src.String())
-	}
-
-	fmt.Print(b.String())
-	return nil
 }
