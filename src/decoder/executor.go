@@ -12,10 +12,33 @@ type X86Executor struct {
 	cpu *CPU
 }
 
-var ops = map[Operation]func(current, value int) int{
-	MOV: func(_, v int) int { return v },
-	ADD: func(c, v int) int { return c + v },
-	SUB: func(c, v int) int { return c - v },
+type OperationInfo struct {
+	Execute      func(current, value int) int
+	WritesResult bool
+	IsArithmetic bool
+}
+
+var ops = map[Operation]OperationInfo{
+	MOV: {
+		Execute:      func(_, v int) int { return v },
+		WritesResult: true,
+		IsArithmetic: false,
+	},
+	ADD: {
+		Execute:      func(c, v int) int { return c + v },
+		WritesResult: true,
+		IsArithmetic: true,
+	},
+	SUB: {
+		Execute:      func(c, v int) int { return c - v },
+		WritesResult: true,
+		IsArithmetic: true,
+	},
+	CMP: {
+		Execute:      func(c, v int) int { return c - v },
+		WritesResult: false,
+		IsArithmetic: true,
+	},
 }
 
 func newX86Executor(cpu *CPU) *X86Executor {
@@ -33,10 +56,9 @@ func (e *X86Executor) Execute(instr Instruction) error {
 }
 
 func (e *X86Executor) executeToReg(operation Operation, dest Register, value int) {
-	if opFunc, ok := ops[operation]; ok {
+	if opInfo, ok := ops[operation]; ok {
 		current := e.cpu.Registers[dest.Name]
-		newValue := opFunc(current, value)
-		e.cpu.Registers[dest.Name] = newValue
+		newValue := e.cpu.setRegVal(opInfo, dest.Name, value)
 		fmt.Printf(" ; %s:%#x->%#x", dest.Name, current, newValue)
 	}
 }

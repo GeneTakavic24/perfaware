@@ -13,6 +13,20 @@ func (cpu *CPU) PrintCPU() {
 		val := cpu.Registers[reg]
 		fmt.Printf("      %s: %#04x (%d)\n", reg, val, val)
 	}
+
+	cpu.printFlags()
+}
+
+func (c *CPU) printFlags() {
+	flags := ""
+	if c.Flags.Sign {
+		flags += "S"
+	}
+	if c.Flags.Zero {
+		flags += "Z"
+	}
+
+	fmt.Printf(" flags: %s", flags)
 }
 
 func (instr *Instruction) PrintInstruction() {

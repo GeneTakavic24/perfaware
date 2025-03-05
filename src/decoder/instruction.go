@@ -22,6 +22,7 @@ const (
 	MOV Operation = "mov"
 	ADD Operation = "add"
 	SUB Operation = "sub"
+	CMP Operation = "cmp"
 )
 
 type Register struct {
