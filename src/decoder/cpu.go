@@ -40,14 +40,13 @@ func (cpu *CPU) ExecuteReg(operation Operation, dest Register, value int) int {
 	if opInfo, ok := ops[operation]; ok {
 		current := cpu.Registers[dest.Name]
 		newVal := opInfo.Execute(cpu.Registers[dest.Name], value)
-		cpu.updateFlags(newVal, opInfo.IsArithmetic)
 		if opInfo.WritesResult {
 			cpu.Registers[dest.Name] = newVal
 			fmt.Printf(" ;  %s:%#x->%#x", dest.Name, current, newVal)
 		} else {
 			fmt.Printf(" ; ")
 		}
-		cpu.printFlags()
+		cpu.updateFlags(newVal, opInfo.IsArithmetic)
 		return newVal
 	}
 
@@ -58,8 +57,23 @@ func (c *CPU) updateFlags(value int, isArithmetic bool) {
 	if !isArithmetic {
 		return
 	}
+	oldZero := c.Flags.Zero
+	oldSign := c.Flags.Sign
+
 	c.Flags.Zero = value == 0
 	c.Flags.Sign = (value & sign_mask) != 0
+
+	if !oldZero && c.Flags.Zero {
+		fmt.Printf(" flags:->Z")
+	} else if oldZero && !c.Flags.Zero {
+		fmt.Printf(" flags:Z->")
+	}
+
+	if !oldSign && c.Flags.Sign {
+		fmt.Printf(" flags:->S")
+	} else if oldSign && !c.Flags.Sign {
+		fmt.Printf(" flags:S->")
+	}
 }
 
 func NewCPU(memSize int) *CPU {

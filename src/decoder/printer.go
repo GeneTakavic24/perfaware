@@ -14,10 +14,10 @@ func (cpu *CPU) PrintCPU() {
 		fmt.Printf("      %s: %#04x (%d)\n", reg, val, val)
 	}
 
-	cpu.printFlags()
+	cpu.PrintFlags()
 }
 
-func (c *CPU) printFlags() {
+func (c *CPU) PrintFlags() {
 	flags := ""
 	if c.Flags.Sign {
 		flags += "S"
