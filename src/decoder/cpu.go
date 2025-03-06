@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type CPU struct {
 	Registers map[string]int
 	Memory    []byte
@@ -9,15 +11,47 @@ type CPU struct {
 	}
 }
 
+var ops = map[Operation]OperationInfo{
+	MOV: {
+		Execute:      func(_, v int) int { return v },
+		WritesResult: true,
+		IsArithmetic: false,
+	},
+	ADD: {
+		Execute:      func(c, v int) int { return c + v },
+		WritesResult: true,
+		IsArithmetic: true,
+	},
+	SUB: {
+		Execute:      func(c, v int) int { return c - v },
+		WritesResult: true,
+		IsArithmetic: true,
+	},
+	CMP: {
+		Execute:      func(c, v int) int { return c - v },
+		WritesResult: false,
+		IsArithmetic: true,
+	},
+}
+
 const sign_mask = 0x8000
 
-func (cpu *CPU) Execute(opInfo OperationInfo, regName string, val int) int {
-	newVal := opInfo.Execute(cpu.Registers[regName], val)
-	cpu.updateFlags(newVal, opInfo.IsArithmetic)
-	if opInfo.WritesResult {
-		cpu.Registers[regName] = newVal
+func (cpu *CPU) ExecuteReg(operation Operation, dest Register, value int) int {
+	if opInfo, ok := ops[operation]; ok {
+		current := cpu.Registers[dest.Name]
+		newVal := opInfo.Execute(cpu.Registers[dest.Name], value)
+		cpu.updateFlags(newVal, opInfo.IsArithmetic)
+		if opInfo.WritesResult {
+			cpu.Registers[dest.Name] = newVal
+			fmt.Printf(" ;  %s:%#x->%#x", dest.Name, current, newVal)
+		} else {
+			fmt.Printf(" ; ")
+		}
+		cpu.printFlags()
+		return newVal
 	}
-	return newVal
+
+	panic("Unknown error")
 }
 
 func (c *CPU) updateFlags(value int, isArithmetic bool) {
@@ -25,7 +59,7 @@ func (c *CPU) updateFlags(value int, isArithmetic bool) {
 		return
 	}
 	c.Flags.Zero = value == 0
-	c.Flags.Sign = value&sign_mask == 1
+	c.Flags.Sign = (value & sign_mask) != 0
 }
 
 func NewCPU(memSize int) *CPU {
