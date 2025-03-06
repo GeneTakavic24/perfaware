@@ -26,7 +26,9 @@ func (c *CPU) printFlags() {
 		flags += "Z"
 	}
 
-	fmt.Printf(" flags: %s", flags)
+	if flags != "" {
+		fmt.Printf("  flags: %s", flags)
+	}
 }
 
 func (instr *Instruction) PrintInstruction() {

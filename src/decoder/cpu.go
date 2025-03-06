@@ -11,7 +11,7 @@ type CPU struct {
 
 const sign_mask = 0x8000
 
-func (cpu *CPU) setRegVal(opInfo OperationInfo, regName string, val int) int {
+func (cpu *CPU) Execute(opInfo OperationInfo, regName string, val int) int {
 	newVal := opInfo.Execute(cpu.Registers[regName], val)
 	cpu.updateFlags(newVal, opInfo.IsArithmetic)
 	if opInfo.WritesResult {
@@ -21,7 +21,7 @@ func (cpu *CPU) setRegVal(opInfo OperationInfo, regName string, val int) int {
 }
 
 func (c *CPU) updateFlags(value int, isArithmetic bool) {
-	if isArithmetic {
+	if !isArithmetic {
 		return
 	}
 	c.Flags.Zero = value == 0

@@ -58,8 +58,9 @@ func (e *X86Executor) Execute(instr Instruction) error {
 func (e *X86Executor) executeToReg(operation Operation, dest Register, value int) {
 	if opInfo, ok := ops[operation]; ok {
 		current := e.cpu.Registers[dest.Name]
-		newValue := e.cpu.setRegVal(opInfo, dest.Name, value)
+		newValue := e.cpu.Execute(opInfo, dest.Name, value)
 		fmt.Printf(" ; %s:%#x->%#x", dest.Name, current, newValue)
+		e.cpu.printFlags()
 	}
 }
 
