@@ -20,13 +20,16 @@ func simulate(filePath string) {
 	fmt.Println("bits 16")
 	fmt.Println()
 
-	for i := 0; i < len(bytes); {
-		end := min(i+6, len(bytes))
-		instr := ParseInstruction(bytes[i:end])
+	ip := cpu.Registers["ip"]
+	for ip < int(len(bytes)) {
+		end := min(ip+6, len(bytes))
+		instr := ParseInstruction(bytes[ip:end])
+
 		instr.PrintInstruction()
+
 		executor.Execute(instr)
+		ip = cpu.Registers["ip"]
 		fmt.Println()
-		i += int(instr.Consumed)
 	}
 
 	cpu.PrintCPU()

@@ -46,6 +46,7 @@ func (cpu *CPU) ExecuteReg(operation Operation, dest Register, value int) int {
 		} else {
 			fmt.Printf(" ; ")
 		}
+
 		cpu.updateFlags(newVal, opInfo.IsArithmetic)
 		return newVal
 	}
@@ -75,14 +76,15 @@ func (c *CPU) updateFlags(value int, isArithmetic bool) {
 		fmt.Printf(" flags:S->")
 	}
 }
-
 func NewCPU(memSize int) *CPU {
 	return &CPU{
 		Registers: map[string]int{
 			"ax": 0, "bx": 0, "cx": 0, "dx": 0,
 			"si": 0, "di": 0, "sp": 0, "bp": 0,
+			"ip": 0,
 		},
 		Memory: make([]byte, memSize),
+
 		Flags: struct {
 			Zero bool
 			Sign bool

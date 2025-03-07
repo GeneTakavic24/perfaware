@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Executor interface {
 	Execute(instr Instruction) error
 }
@@ -20,6 +22,15 @@ func newX86Executor(cpu *CPU) *X86Executor {
 
 func (e *X86Executor) Execute(instr Instruction) error {
 	value := e.extractFrom(instr.Src)
+
+	prevIp := e.cpu.Registers["ip"]
+	e.cpu.Registers["ip"] = prevIp + int(instr.Consumed)
+
+	defer func() {
+		if e.cpu.Registers["ip"] != prevIp {
+			fmt.Printf("  ip:0x%x->0x%x", prevIp, e.cpu.Registers["ip"])
+		}
+	}()
 
 	if dest, ok := instr.Dest.(Register); ok {
 		e.cpu.ExecuteReg(instr.Operation, dest, value)

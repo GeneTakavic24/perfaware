@@ -8,13 +8,16 @@ import (
 func (cpu *CPU) PrintCPU() {
 	fmt.Println()
 	fmt.Println("Final registers:")
-	regs := []string{"ax", "bx", "cx", "dx", "sp", "bp", "si", "di"}
+	regs := []string{"ax", "bx", "cx", "dx", "sp", "bp", "si", "di", "ip"}
 	for _, reg := range regs {
 		val := cpu.Registers[reg]
-		fmt.Printf("      %s: %#04x (%d)\n", reg, val, val)
+		if val != 0 {
+			fmt.Printf("      %s: %#04x (%d)\n", reg, val, val)
+		}
 	}
 
 	cpu.PrintFlags()
+	fmt.Println()
 }
 
 func (c *CPU) PrintFlags() {
