@@ -23,6 +23,7 @@ const (
 	ADD Operation = "add"
 	SUB Operation = "sub"
 	CMP Operation = "cmp"
+	Jnz Operation = "jnz"
 )
 
 type Register struct {

@@ -14,6 +14,7 @@ type OperationInfo struct {
 	Execute      func(current, value int) int
 	WritesResult bool
 	IsArithmetic bool
+	IsJump       bool
 }
 
 func newX86Executor(cpu *CPU) *X86Executor {
@@ -21,20 +22,28 @@ func newX86Executor(cpu *CPU) *X86Executor {
 }
 
 func (e *X86Executor) Execute(instr Instruction) error {
-	value := e.extractFrom(instr.Src)
-
 	prevIp := e.cpu.Registers["ip"]
-	e.cpu.Registers["ip"] = prevIp + int(instr.Consumed)
+
+	if instr.Operation == Jnz {
+		offset := e.extractFrom(instr.Dest)
+		jumped := e.cpu.ExecuteJump(instr.Operation, offset)
+
+		if !jumped {
+			e.cpu.Registers["ip"] = prevIp + int(instr.Consumed)
+		}
+	} else {
+		e.cpu.Registers["ip"] = prevIp + int(instr.Consumed)
+		value := e.extractFrom(instr.Src)
+		if dest, ok := instr.Dest.(Register); ok {
+			e.cpu.ExecuteReg(instr.Operation, dest, value)
+		}
+	}
 
 	defer func() {
 		if e.cpu.Registers["ip"] != prevIp {
 			fmt.Printf("  ip:0x%x->0x%x", prevIp, e.cpu.Registers["ip"])
 		}
 	}()
-
-	if dest, ok := instr.Dest.(Register); ok {
-		e.cpu.ExecuteReg(instr.Operation, dest, value)
-	}
 
 	return nil
 }

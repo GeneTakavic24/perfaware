@@ -36,7 +36,7 @@ func decodeJmp(bytes []byte) Instruction {
 
 	return Instruction{
 		Operation: Operation(mnemonic),
-		Dest:      Immediate{Value: int(int8(bytes[1]))},
+		Dest:      Immediate{Value: int(int8(bytes[1])) + 2},
 		Consumed:  2,
 	}
 }

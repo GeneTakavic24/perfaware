@@ -36,6 +36,18 @@ var ops = map[Operation]OperationInfo{
 
 const sign_mask = 0x8000
 
+func (cpu *CPU) ExecuteJump(operation Operation, offset int) bool {
+	switch operation {
+	case Jnz:
+		if !cpu.Flags.Zero {
+			oldIP := cpu.Registers["ip"]
+			cpu.Registers["ip"] = oldIP + offset
+			return true
+		}
+	}
+	return false
+}
+
 func (cpu *CPU) ExecuteReg(operation Operation, dest Register, value int) int {
 	if opInfo, ok := ops[operation]; ok {
 		current := cpu.Registers[dest.Name]
