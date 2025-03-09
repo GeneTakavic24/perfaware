@@ -12,7 +12,7 @@ func simulate(filePath string) {
 		return
 	}
 
-	cpu := NewCPU(10)
+	cpu := NewCPU(uint16(0xFFFF))
 
 	executor := newX86Executor(cpu)
 

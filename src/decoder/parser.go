@@ -34,10 +34,12 @@ func ParseInstruction(bytes []byte) Instruction {
 func decodeJmp(bytes []byte) Instruction {
 	mnemonic := opcodeNames[Opcode(bytes[0])]
 
+	consumed := 2
+
 	return Instruction{
 		Operation: Operation(mnemonic),
-		Dest:      Immediate{Value: int(int8(bytes[1])) + 2},
-		Consumed:  2,
+		Dest:      Immediate{Value: int(int8(bytes[1])) + consumed},
+		Consumed:  byte(consumed),
 	}
 }
 

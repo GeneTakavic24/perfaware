@@ -37,6 +37,9 @@ func (e *X86Executor) Execute(instr Instruction) error {
 		if dest, ok := instr.Dest.(Register); ok {
 			e.cpu.ExecuteReg(instr.Operation, dest, value)
 		}
+		if dest, ok := instr.Dest.(EffectiveAddress); ok {
+			e.cpu.ExecuteMem(instr.Operation, dest, value)
+		}
 	}
 
 	defer func() {
@@ -54,6 +57,10 @@ func (e *X86Executor) extractFrom(o Operand) int {
 		return e.cpu.Registers[v.Name]
 	case Immediate:
 		return v.Value
+	case EffectiveAddress:
+		high, low := e.cpu.resolveEffectiveAddress(v)
+		h := uint(*high) << 8
+		return int(h | uint(*low))
 	}
 
 	panic("Unknown dest")
